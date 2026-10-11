@@ -8,45 +8,34 @@ public class OrderBook {
     private final TreeMap<Long, List<Order>> asks = new TreeMap<>();
     private final HashMap<String, Order> orderById = new HashMap<>();
 
-    // 호가창 매수 주문(지정가)
-    public List<Trade> buyOrder(Order buy) {
+    public List<Trade> order(Order reqOrder) {
 
         List<Trade> trades = new ArrayList<>();
+        TreeMap<Long, List<Order>> oppositeOrderBook = reqOrder.getOrderType().equals(OrderType.BUY) ? asks : bids;
+        TreeMap<Long, List<Order>> ownOrderBook = reqOrder.getOrderType().equals(OrderType.BUY) ? bids : asks;
 
-        while(buy.getCount() > 0 && !asks.isEmpty()) {
-            List<Order> asksOrder = asks.firstEntry().getValue();
-            long price = asks.firstKey();
+        while (reqOrder.getCount() > 0 && !oppositeOrderBook.isEmpty()) {
+            List<Order> orderBookOrder = oppositeOrderBook.firstEntry().getValue();
+            long price = oppositeOrderBook.firstKey();
 
-            if(price <= buy.getPrice()) {
-                while(buy.getCount() > 0 && !asksOrder.isEmpty()) {
-                    Order order = asksOrder.getFirst();
+            if (checkMatch(reqOrder, price)) {
+                while (reqOrder.getCount() > 0 && !orderBookOrder.isEmpty()) {
+                    Order order = orderBookOrder.getFirst();
 
-                    if(buy.getCount() >= order.getCount()) {
+                    int decreaseCnt = Math.min(reqOrder.getCount(), order.getCount());
+                    reqOrder.decreaseCount(decreaseCnt);
+                    order.decreaseCount(decreaseCnt);
 
-                        int count = order.getCount();
-                        buy.decreaseCount(order.getCount());
-                        order.decreaseCount(order.getCount());
+                    trades.add(Trade.create(reqOrder.getOrderType(), reqOrder.getOrderId(), order.getOrderId(), price, decreaseCnt));
 
-                        trades.add(new Trade(
-                            buy.getOrderId(), order.getOrderId(), price, count
-                        ));
-
-                        asksOrder.removeFirst();
+                    if(order.getCount() == 0) {
+                        orderBookOrder.removeFirst();
                         orderById.remove(order.getOrderId());
-                    } else {
-
-                        int count = buy.getCount();
-                        order.decreaseCount(buy.getCount());
-                        buy.decreaseCount(buy.getCount());
-
-                        trades.add(new Trade(
-                                buy.getOrderId(), order.getOrderId(), price, count
-                        ));
                     }
                 }
 
-                if(asksOrder.isEmpty()) {
-                    asks.remove(price);
+                if (orderBookOrder.isEmpty()) {
+                    oppositeOrderBook.remove(price);
                 }
 
                 continue;
@@ -55,75 +44,20 @@ public class OrderBook {
             break;
         }
 
-        if(buy.getCount() != 0) {
-            if(bids.containsKey(buy.getPrice())) {
-                bids.get(buy.getPrice()).add(buy);
-            } else {
-                bids.put(buy.getPrice(), new ArrayList<>(List.of(buy)));
-            }
-            orderById.put(buy.getOrderId(), buy);
+        if (reqOrder.getCount() != 0) {
+            ownOrderBook.computeIfAbsent(reqOrder.getPrice(), k -> new ArrayList<>()).add(reqOrder);
+            orderById.put(reqOrder.getOrderId(), reqOrder);
         }
 
         return trades;
     }
 
-    // 호가창 매도 주문(지정가)
-    public List<Trade> sellOrder(Order sell) {
-
-        List<Trade> trades = new ArrayList<>();
-
-        while(sell.getCount() > 0 && !bids.isEmpty()) {
-            List<Order> bidsOrder = bids.firstEntry().getValue();
-            long price = bids.firstKey();
-
-            if(price >= sell.getPrice()) {
-                while(sell.getCount() > 0 && !bidsOrder.isEmpty()) {
-                    Order order = bidsOrder.getFirst();
-
-                    if(sell.getCount() >= order.getCount()) {
-
-                        int count = order.getCount();
-                        sell.decreaseCount(order.getCount());
-                        order.decreaseCount(order.getCount());
-
-                        trades.add(new Trade(
-                                order.getOrderId(), sell.getOrderId(),price, count
-                        ));
-
-                        bidsOrder.removeFirst();
-                        orderById.remove(order.getOrderId());
-                    } else {
-
-                        int count = sell.getCount();
-                        order.decreaseCount(sell.getCount());
-                        sell.decreaseCount(sell.getCount());
-
-                        trades.add(new Trade(
-                                order.getOrderId(), sell.getOrderId(),price, count
-                        ));
-                    }
-                }
-
-                if(bidsOrder.isEmpty()) {
-                    bids.remove(price);
-                }
-
-                continue;
-            }
-
-            break;
+    private boolean checkMatch(Order reqOrder, long orderBookOrderPrice) {
+        if(reqOrder.getOrderType().equals(OrderType.BUY)) { // 매수
+            return orderBookOrderPrice <= reqOrder.getPrice();
         }
 
-        if(sell.getCount() != 0) {
-            if(asks.containsKey(sell.getPrice())) {
-                asks.get(sell.getPrice()).add(sell);
-            } else {
-                asks.put(sell.getPrice(), new ArrayList<>(List.of(sell)));
-            }
-            orderById.put(sell.getOrderId(), sell);
-        }
-
-        return trades;
+        return orderBookOrderPrice >= reqOrder.getPrice();
     }
 
     // 호가 주문 취소

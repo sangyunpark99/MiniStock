@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("호가창 매도 주문 (sellOrder)")
+@DisplayName("호가창 매도 주문 (order)")
 class OrderBookSellOrderTest {
 
     private static final String SYMBOL = "000660";
@@ -70,7 +70,7 @@ class OrderBookSellOrderTest {
     void noBids() {
         Order order = sell("S-1", 10_000, 5);
 
-        orderBook.sellOrder(order);
+        orderBook.order(order);
 
         assertEquals(List.of(order), asksAt(10_000));
         // orderById
@@ -84,8 +84,8 @@ class OrderBookSellOrderTest {
         Order first = sell("S-1", 10_000, 3);
         Order second = sell("S-2", 10_000, 4);
 
-        orderBook.sellOrder(first);
-        orderBook.sellOrder(second);
+        orderBook.order(first);
+        orderBook.order(second);
 
         assertEquals(List.of(first, second), asksAt(10_000));
         // orderById
@@ -101,7 +101,7 @@ class OrderBookSellOrderTest {
         restBid(bid);
         Order order = sell("S-1", 10_000, 5);
 
-        orderBook.sellOrder(order);
+        orderBook.order(order);
 
         assertEquals(5, bid.getCount());
         assertEquals(List.of(bid), bidsAt(9_900));
@@ -119,7 +119,7 @@ class OrderBookSellOrderTest {
         restBid(bid);
         Order order = sell("S-1", 10_050, 3);
 
-        orderBook.sellOrder(order);
+        orderBook.order(order);
 
         assertEquals(0, order.getCount());
         assertEquals(0, bid.getCount());
@@ -140,7 +140,7 @@ class OrderBookSellOrderTest {
         restBid(c);
         Order order = sell("S-1", 10_000, 6);
 
-        orderBook.sellOrder(order);
+        orderBook.order(order);
 
         assertEquals(0, order.getCount());       // 6주 모두 체결
         assertEquals(0, b.getCount());           // B 3주 체결
@@ -163,7 +163,7 @@ class OrderBookSellOrderTest {
         restBid(expensive);
         Order order = sell("S-1", 9_900, 5);
 
-        orderBook.sellOrder(order);
+        orderBook.order(order);
 
         assertEquals(0, expensive.getCount());   // 비싼 호가가 먼저 체결
         assertFalse(book("bids").containsKey(10_100L));
@@ -184,7 +184,7 @@ class OrderBookSellOrderTest {
         restBid(next);
         Order order = sell("S-1", 10_000, 6);
 
-        orderBook.sellOrder(order);
+        orderBook.order(order);
 
         assertEquals(0, order.getCount());
         assertFalse(book("bids").containsKey(10_050L));   // 빈 가격 레벨 제거
@@ -205,7 +205,7 @@ class OrderBookSellOrderTest {
         restBid(cheap);
         Order order = sell("S-1", 10_000, 6);
 
-        orderBook.sellOrder(order);
+        orderBook.order(order);
 
         assertEquals(3, order.getCount());               // 3주 체결, 3주 남음
         assertFalse(book("bids").containsKey(10_050L));

@@ -61,7 +61,7 @@ class OrderBookCancelOrderTest {
     @Test
     @DisplayName("호가창에 쌓인 매수 주문을 취소하면 매수 호가와 orderById에서 사라진다")
     void cancelRestingBuy() {
-        orderBook.buyOrder(buy("B-1", 10_000, 5));
+        orderBook.order(buy("B-1", 10_000, 5));
 
         boolean result = orderBook.cancelOrder("B-1");
 
@@ -74,7 +74,7 @@ class OrderBookCancelOrderTest {
     @Test
     @DisplayName("호가창에 쌓인 매도 주문을 취소하면 매도 호가와 orderById에서 사라진다")
     void cancelRestingSell() {
-        orderBook.sellOrder(sell("S-1", 10_000, 5));
+        orderBook.order(sell("S-1", 10_000, 5));
 
         boolean result = orderBook.cancelOrder("S-1");
 
@@ -90,9 +90,9 @@ class OrderBookCancelOrderTest {
         Order first = buy("B-1", 10_000, 1);
         Order middle = buy("B-2", 10_000, 2);
         Order last = buy("B-3", 10_000, 3);
-        orderBook.buyOrder(first);
-        orderBook.buyOrder(middle);
-        orderBook.buyOrder(last);
+        orderBook.order(first);
+        orderBook.order(middle);
+        orderBook.order(last);
 
         boolean result = orderBook.cancelOrder("B-2");
 
@@ -107,8 +107,8 @@ class OrderBookCancelOrderTest {
     void cancelFirstOfPriceLevel() {
         Order first = sell("S-1", 10_000, 1);
         Order second = sell("S-2", 10_000, 2);
-        orderBook.sellOrder(first);
-        orderBook.sellOrder(second);
+        orderBook.order(first);
+        orderBook.order(second);
 
         orderBook.cancelOrder("S-1");
 
@@ -121,8 +121,8 @@ class OrderBookCancelOrderTest {
     void otherPriceLevelsUntouched() {
         Order a = buy("B-1", 10_000, 1);
         Order b = buy("B-2", 9_900, 2);
-        orderBook.buyOrder(a);
-        orderBook.buyOrder(b);
+        orderBook.order(a);
+        orderBook.order(b);
 
         orderBook.cancelOrder("B-1");
 
@@ -135,7 +135,7 @@ class OrderBookCancelOrderTest {
     @DisplayName("존재하지 않는 주문 ID를 취소하면 false를 반환하고 호가창은 그대로다")
     void cancelUnknownOrder() {
         Order order = buy("B-1", 10_000, 5);
-        orderBook.buyOrder(order);
+        orderBook.order(order);
 
         boolean result = orderBook.cancelOrder("NOT-EXIST");
 
@@ -147,8 +147,8 @@ class OrderBookCancelOrderTest {
     @Test
     @DisplayName("이미 전량 체결된 주문을 취소하면 false를 반환한다")
     void cancelFilledOrder() {
-        orderBook.sellOrder(sell("S-1", 10_000, 5));
-        orderBook.buyOrder(buy("B-1", 10_000, 5));   // S-1, B-1 모두 전량 체결
+        orderBook.order(sell("S-1", 10_000, 5));
+        orderBook.order(buy("B-1", 10_000, 5));   // S-1, B-1 모두 전량 체결
 
         assertFalse(orderBook.cancelOrder("S-1"));
         assertFalse(orderBook.cancelOrder("B-1"));
@@ -158,8 +158,8 @@ class OrderBookCancelOrderTest {
     @DisplayName("부분 체결된 주문을 취소하면 남은 수량이 호가창에서 사라진다")
     void cancelPartiallyFilledOrder() {
         Order ask = sell("S-1", 10_000, 5);
-        orderBook.sellOrder(ask);
-        orderBook.buyOrder(buy("B-1", 10_000, 3));   // S-1은 2주 남음
+        orderBook.order(ask);
+        orderBook.order(buy("B-1", 10_000, 3));   // S-1은 2주 남음
         assertEquals(2, ask.getCount());
 
         boolean result = orderBook.cancelOrder("S-1");
@@ -172,7 +172,7 @@ class OrderBookCancelOrderTest {
     @Test
     @DisplayName("같은 주문을 두 번 취소하면 두 번째는 false를 반환한다")
     void cancelTwice() {
-        orderBook.buyOrder(buy("B-1", 10_000, 5));
+        orderBook.order(buy("B-1", 10_000, 5));
 
         assertTrue(orderBook.cancelOrder("B-1"));
         assertFalse(orderBook.cancelOrder("B-1"));
@@ -183,12 +183,12 @@ class OrderBookCancelOrderTest {
     void canceledOrderIsNotMatched() {
         Order canceled = sell("S-1", 10_000, 5);
         Order alive = sell("S-2", 10_100, 5);
-        orderBook.sellOrder(canceled);
-        orderBook.sellOrder(alive);
+        orderBook.order(canceled);
+        orderBook.order(alive);
         orderBook.cancelOrder("S-1");
 
         Order order = buy("B-1", 10_100, 5);
-        orderBook.buyOrder(order);
+        orderBook.order(order);
 
         assertEquals(0, alive.getCount());             // 살아 있는 S-2와 체결
         assertEquals(0, order.getCount());
