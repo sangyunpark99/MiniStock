@@ -49,10 +49,6 @@ public class Order {
         return this.createdAt;
     }
 
-    public void decreaseOneCount() {
-        this.count -= 1;
-    }
-
     public void decreaseCount(int minusCount) {
         this.count -= minusCount;
     }

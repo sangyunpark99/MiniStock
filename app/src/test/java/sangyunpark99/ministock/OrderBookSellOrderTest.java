@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,23 +33,28 @@ class OrderBookSellOrderTest {
     }
 
     @SuppressWarnings("unchecked")
-    private TreeMap<Long, List<Order>> book(String name) {
+    private <T> T field(String name) {
         try {
             Field f = OrderBook.class.getDeclaredField(name);
             f.setAccessible(true);
-            return (TreeMap<Long, List<Order>>) f.get(orderBook);
+            return (T) f.get(orderBook);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
     }
 
+    private TreeMap<Long, List<Order>> book(String name) {
+        return field(name);
+    }
+
+    private Map<String, Order> orderById() {
+        return field("orderById");
+    }
+
+    /** 준비용: 매수 호가와 orderById에 주문을 쌓는다 */
     private void restBid(Order order) {
-        List<Order> level = book("bids").get(order.getPrice());
-        if (level == null) {
-            level = new ArrayList<>();
-            book("bids").put(order.getPrice(), level);
-        }
-        level.add(order);
+        book("bids").computeIfAbsent(order.getPrice(), k -> new ArrayList<>()).add(order);
+        orderById().put(order.getOrderId(), order);
     }
 
     private List<Order> asksAt(long price) {
@@ -67,6 +73,9 @@ class OrderBookSellOrderTest {
         orderBook.sellOrder(order);
 
         assertEquals(List.of(order), asksAt(10_000));
+        // orderById
+        assertSame(order, orderById().get("S-1"));
+        assertEquals(1, orderById().size());
     }
 
     @Test
@@ -79,6 +88,10 @@ class OrderBookSellOrderTest {
         orderBook.sellOrder(second);
 
         assertEquals(List.of(first, second), asksAt(10_000));
+        // orderById
+        assertSame(first, orderById().get("S-1"));
+        assertSame(second, orderById().get("S-2"));
+        assertEquals(2, orderById().size());
     }
 
     @Test
@@ -93,6 +106,10 @@ class OrderBookSellOrderTest {
         assertEquals(5, bid.getCount());
         assertEquals(List.of(bid), bidsAt(9_900));
         assertEquals(List.of(order), asksAt(10_000));
+        // orderById: 둘 다 호가창에 남아 있으므로 둘 다 존재
+        assertSame(bid, orderById().get("B-1"));
+        assertSame(order, orderById().get("S-1"));
+        assertEquals(2, orderById().size());
     }
 
     @Test
@@ -108,6 +125,10 @@ class OrderBookSellOrderTest {
         assertEquals(0, bid.getCount());
         assertFalse(book("bids").containsKey(10_050L));
         assertFalse(book("asks").containsKey(10_050L));
+        // orderById: 둘 다 전량 체결 → 둘 다 없어야 함
+        assertNull(orderById().get("B-1"));
+        assertNull(orderById().get("S-1"));
+        assertTrue(orderById().isEmpty());
     }
 
     @Test
@@ -126,6 +147,11 @@ class OrderBookSellOrderTest {
         assertEquals(1, c.getCount());           // C 3주 체결, 1주 남음
         assertEquals(List.of(c), bidsAt(10_050));
         assertFalse(book("asks").containsKey(10_000L));
+        // orderById: B, 매도는 사라지고 C만 남음
+        assertNull(orderById().get("B-B"));
+        assertSame(c, orderById().get("B-C"));
+        assertNull(orderById().get("S-1"));
+        assertEquals(1, orderById().size());
     }
 
     @Test
@@ -143,6 +169,11 @@ class OrderBookSellOrderTest {
         assertFalse(book("bids").containsKey(10_100L));
         assertEquals(5, cheap.getCount());       // 싼 호가는 그대로
         assertEquals(List.of(cheap), bidsAt(9_900));
+        // orderById: 비싼 매수와 매도는 사라지고, 싼 매수만 남음
+        assertNull(orderById().get("B-2"));
+        assertSame(cheap, orderById().get("B-1"));
+        assertNull(orderById().get("S-1"));
+        assertEquals(1, orderById().size());
     }
 
     @Test
@@ -159,6 +190,11 @@ class OrderBookSellOrderTest {
         assertFalse(book("bids").containsKey(10_050L));   // 빈 가격 레벨 제거
         assertEquals(2, next.getCount());
         assertEquals(List.of(next), bidsAt(10_000));
+        // orderById: B-1, 매도는 사라지고 B-2만 남음
+        assertNull(orderById().get("B-1"));
+        assertSame(next, orderById().get("B-2"));
+        assertNull(orderById().get("S-1"));
+        assertEquals(1, orderById().size());
     }
 
     @Test
@@ -175,5 +211,10 @@ class OrderBookSellOrderTest {
         assertFalse(book("bids").containsKey(10_050L));
         assertEquals(5, cheap.getCount());               // 싼 호가는 그대로
         assertEquals(List.of(order), asksAt(10_000));
+        // orderById: B-1은 사라지고, B-2와 남은 매도는 존재
+        assertNull(orderById().get("B-1"));
+        assertSame(cheap, orderById().get("B-2"));
+        assertSame(order, orderById().get("S-1"));
+        assertEquals(2, orderById().size());
     }
 }
