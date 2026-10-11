@@ -53,11 +53,7 @@ public class OrderBook {
         }
 
         if (reqOrder.getCount() != 0) {
-            if (ownOrderBook.containsKey(reqOrder.getPrice())) {
-                ownOrderBook.get(reqOrder.getPrice()).add(reqOrder);
-            } else {
-                ownOrderBook.put(reqOrder.getPrice(), new ArrayList<>(List.of(reqOrder)));
-            }
+            ownOrderBook.computeIfAbsent(reqOrder.getPrice(), k -> new ArrayList<>()).add(reqOrder);
             orderById.put(reqOrder.getOrderId(), reqOrder);
         }
 

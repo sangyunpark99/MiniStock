@@ -13,7 +13,7 @@ import java.util.TreeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("호가창 매수 주문 (order)")
-class OrderBookorderTest {
+class OrderBookOrderTest {
 
     private static final String SYMBOL = "000660";
 
