@@ -22,23 +22,15 @@ public class OrderBook {
                 while (reqOrder.getCount() > 0 && !orderBookOrder.isEmpty()) {
                     Order order = orderBookOrder.getFirst();
 
-                    if (reqOrder.getCount() >= order.getCount()) {
+                    int decreaseCnt = Math.min(reqOrder.getCount(), order.getCount());
+                    reqOrder.decreaseCount(decreaseCnt);
+                    order.decreaseCount(decreaseCnt);
 
-                        int count = order.getCount();
-                        reqOrder.decreaseCount(order.getCount());
-                        order.decreaseCount(order.getCount());
+                    trades.add(Trade.create(reqOrder.getOrderType(), reqOrder.getOrderId(), order.getOrderId(), price, decreaseCnt));
 
-                        trades.add(Trade.create(reqOrder.getOrderType(), reqOrder.getOrderId(), order.getOrderId(), price, count) );
-
+                    if(order.getCount() == 0) {
                         orderBookOrder.removeFirst();
                         orderById.remove(order.getOrderId());
-                    } else {
-
-                        int count = reqOrder.getCount();
-                        order.decreaseCount(reqOrder.getCount());
-                        reqOrder.decreaseCount(reqOrder.getCount());
-
-                        trades.add(Trade.create(reqOrder.getOrderType(), reqOrder.getOrderId(), order.getOrderId(), price, count));
                     }
                 }
 
