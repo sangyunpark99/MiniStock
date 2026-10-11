@@ -94,7 +94,6 @@ public class OrderBook {
 
     // 호가 주문 취소
     public boolean cancelOrder(String orderId) {
-        // 매수 주문인가? 매도 주문인가?
         Order order = orderById.get(orderId);
         if(order == null) return false;
 
@@ -110,13 +109,13 @@ public class OrderBook {
 
         List<Order> orders = orderbook.get(order.getPrice());
 
-        orders.remove(order); // 호가창에서 제거
+        orders.remove(order);
 
         if(orders.isEmpty()) {
             orderbook.remove(order.getPrice());
         }
 
-        orderById.remove(orderId); // 찾는
+        orderById.remove(orderId);
 
         return true;
     }
