@@ -1,6 +1,5 @@
 package sangyunpark99.ministock;
 
-import javax.swing.*;
 import java.util.*;
 
 public class OrderBook {
@@ -10,7 +9,10 @@ public class OrderBook {
     private final HashMap<String, Order> orderById = new HashMap<>();
 
     // 호가창 매수 주문(지정가)
-    public void buyOrder(Order buy) {
+    public List<Trade> buyOrder(Order buy) {
+
+        List<Trade> trades = new ArrayList<>();
+
         while(buy.getCount() > 0 && !asks.isEmpty()) {
             List<Order> asksOrder = asks.firstEntry().getValue();
             long price = asks.firstKey();
@@ -20,13 +22,26 @@ public class OrderBook {
                     Order order = asksOrder.getFirst();
 
                     if(buy.getCount() >= order.getCount()) {
+
+                        int count = order.getCount();
                         buy.decreaseCount(order.getCount());
                         order.decreaseCount(order.getCount());
+
+                        trades.add(new Trade(
+                            buy.getOrderId(), order.getOrderId(), price, count
+                        ));
+
                         asksOrder.removeFirst();
                         orderById.remove(order.getOrderId());
                     } else {
+
+                        int count = buy.getCount();
                         order.decreaseCount(buy.getCount());
                         buy.decreaseCount(buy.getCount());
+
+                        trades.add(new Trade(
+                                buy.getOrderId(), order.getOrderId(), price, count
+                        ));
                     }
                 }
 
@@ -48,10 +63,14 @@ public class OrderBook {
             }
             orderById.put(buy.getOrderId(), buy);
         }
+
+        return trades;
     }
 
     // 호가창 매도 주문(지정가)
-    public void sellOrder(Order sell) {
+    public List<Trade> sellOrder(Order sell) {
+
+        List<Trade> trades = new ArrayList<>();
 
         while(sell.getCount() > 0 && !bids.isEmpty()) {
             List<Order> bidsOrder = bids.firstEntry().getValue();
@@ -62,13 +81,26 @@ public class OrderBook {
                     Order order = bidsOrder.getFirst();
 
                     if(sell.getCount() >= order.getCount()) {
+
+                        int count = order.getCount();
                         sell.decreaseCount(order.getCount());
                         order.decreaseCount(order.getCount());
+
+                        trades.add(new Trade(
+                                order.getOrderId(), sell.getOrderId(),price, count
+                        ));
+
                         bidsOrder.removeFirst();
                         orderById.remove(order.getOrderId());
                     } else {
+
+                        int count = sell.getCount();
                         order.decreaseCount(sell.getCount());
                         sell.decreaseCount(sell.getCount());
+
+                        trades.add(new Trade(
+                                order.getOrderId(), sell.getOrderId(),price, count
+                        ));
                     }
                 }
 
@@ -90,6 +122,8 @@ public class OrderBook {
             }
             orderById.put(sell.getOrderId(), sell);
         }
+
+        return trades;
     }
 
     // 호가 주문 취소
