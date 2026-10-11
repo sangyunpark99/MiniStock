@@ -41,4 +41,12 @@ public class Trade {
     public LocalDateTime getCreatedAt() {
         return this.createdAt;
     }
+
+    public static Trade create(OrderType type,String reqOrderId, String orderBookOrderId, long price, int count) {
+        if(type.equals(OrderType.BUY)) {
+            return new Trade(reqOrderId, orderBookOrderId, price, count);
+        }
+
+        return new Trade(orderBookOrderId, reqOrderId, price, count);
+    }
 }
