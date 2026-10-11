@@ -1,14 +1,11 @@
 package sangyunpark99.ministock;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 public class OrderBook {
 
-    private final TreeMap<Long, List<Order>> bids = new TreeMap<>();
+    private final TreeMap<Long, List<Order>> bids = new TreeMap<>(Collections.reverseOrder());
     private final TreeMap<Long, List<Order>> asks = new TreeMap<>();
     private final HashMap<String, Order> orderById = new HashMap<>();
 
@@ -53,9 +50,45 @@ public class OrderBook {
     }
 
     // 호가창 매도 주문
-    public void sellOrder() {
-        // 매수 호가에서 가장 비싼 주문을 가져온다.
-    }
+    public void sellOrder(Order sell) {
 
-    // 호가창 주문 취소
+        while(sell.getCount() > 0 && !bids.isEmpty()) {
+
+            List<Order> bidsOrder = bids.firstEntry().getValue();
+            long price = bids.firstKey();
+
+            // 매도 호가
+
+            if(price >= sell.getPrice()) { // 가격이 맞다면 구매
+                while(sell.getCount() > 0 && !bidsOrder.isEmpty()) {
+                    Order order = bidsOrder.getFirst();
+
+                    if(sell.getCount() >= order.getCount()) {
+                        sell.decreaseCount(order.getCount());
+                        order.decreaseCount(order.getCount());
+                        bidsOrder.removeFirst();
+                    } else {
+                        order.decreaseCount(sell.getCount());
+                        sell.decreaseCount(sell.getCount());
+                    }
+                }
+
+                if(bidsOrder.isEmpty()) {
+                    bids.remove(price);
+                }
+
+                continue;
+            }
+
+            break;
+        }
+
+        if(sell.getCount() != 0) {
+            if(asks.containsKey(sell.getPrice())) {
+                asks.get(sell.getPrice()).add(sell);
+            } else {
+                asks.put(sell.getPrice(), new ArrayList<>(List.of(sell)));
+            }
+        }
+    }
 }
