@@ -30,6 +30,7 @@ class MatchingEngineConcurrencyTest {
         Map<String, Function<OrderBook, MatchingEngine>> factories = new LinkedHashMap<>();
         factories.put("일반 락", ob -> new LockedEngine(ob, false));
         factories.put("공정 락", ob -> new LockedEngine(ob, true));
+        factories.put("큐", ob -> new QueuedEngine(ob));
 
         List<Arguments> args = new ArrayList<>();
         factories.forEach((name, factory) -> {
