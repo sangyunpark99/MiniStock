@@ -1,8 +1,12 @@
-package sangyunpark99.ministock;
+package sangyunpark99.ministock.engine;
+
+import sangyunpark99.ministock.Order;
+import sangyunpark99.ministock.OrderType;
+import sangyunpark99.ministock.Trade;
 
 import java.util.*;
 
-public class OrderBook {
+public class OrderBook implements MatchingEngine{
 
     private final TreeMap<Long, List<Order>> bids = new TreeMap<>(Collections.reverseOrder());
     private final TreeMap<Long, List<Order>> asks = new TreeMap<>();
@@ -16,6 +20,7 @@ public class OrderBook {
 
         while (reqOrder.getCount() > 0 && !oppositeOrderBook.isEmpty()) {
             List<Order> orderBookOrder = oppositeOrderBook.firstEntry().getValue();
+
             long price = oppositeOrderBook.firstKey();
 
             if (checkMatch(reqOrder, price)) {
