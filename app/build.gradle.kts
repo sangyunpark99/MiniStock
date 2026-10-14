@@ -1,5 +1,6 @@
 plugins {
     application
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 repositories {
@@ -27,4 +28,12 @@ application {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+}
+
+jmh {
+    jmhVersion.set("1.37")
+    warmupIterations.set(3)
+    iterations.set(5)
+    fork.set(1)
+    resultFormat.set("JSON")
 }
