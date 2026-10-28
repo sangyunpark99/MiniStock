@@ -9,5 +9,5 @@ import java.util.concurrent.CompletableFuture;
 public record OrderCommand(
         CompletableFuture<List<Trade>> result,
         Order order
-) {
+) implements Command{
 }

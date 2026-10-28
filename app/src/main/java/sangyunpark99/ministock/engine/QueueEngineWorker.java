@@ -1,6 +1,5 @@
 package sangyunpark99.ministock.engine;
 
-import sangyunpark99.ministock.Order;
 import sangyunpark99.ministock.Trade;
 
 import java.util.List;
@@ -8,10 +7,10 @@ import java.util.concurrent.BlockingQueue;
 
 public class QueueEngineWorker implements Runnable{
 
-    private final BlockingQueue<OrderCommand> blockingQueue;
+    private final BlockingQueue<Command> blockingQueue;
     private final MatchingEngine orderBook;
 
-    public QueueEngineWorker(BlockingQueue<OrderCommand> blockingQueue, MatchingEngine orderBook) {
+    public QueueEngineWorker(BlockingQueue<Command> blockingQueue, MatchingEngine orderBook) {
         this.blockingQueue = blockingQueue;
         this.orderBook = orderBook;
     }
@@ -19,12 +18,21 @@ public class QueueEngineWorker implements Runnable{
     @Override
     public void run() {
         while(true){
-            try {
-                OrderCommand orderCommand = blockingQueue.take();
-                Order order = orderCommand.order(); // 주문 꺼내기
 
-                List<Trade> result = orderBook.order(order); // 주문 체결하기
-                orderCommand.result().complete(result); // 트레이드 목록
+            try {
+                Command command = blockingQueue.take();
+
+                switch (command) {
+                    case OrderCommand oc -> {
+                           List<Trade> result = orderBook.order(oc.order());
+                        oc.result().complete(result);
+                    }
+
+                    case CancelCommand cc -> {
+                        boolean result = orderBook.cancelOrder(cc.orderId());
+                        cc.result().complete(result);
+                    }
+                }
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // 지워지는 중단 표시 원상 복구
