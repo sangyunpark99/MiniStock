@@ -24,7 +24,7 @@ public class QueueEngineWorker implements Runnable{
 
                 switch (command) {
                     case OrderCommand oc -> {
-                           List<Trade> result = orderBook.order(oc.order());
+                        List<Trade> result = orderBook.order(oc.order());
                         oc.result().complete(result);
                     }
 
