@@ -2,6 +2,7 @@ package sangyunpark99.ministock.engine;
 
 import sangyunpark99.ministock.Order;
 import sangyunpark99.ministock.Trade;
+import sangyunpark99.ministock.journal.Journal;
 
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -14,9 +15,9 @@ public class QueuedEngine implements MatchingEngine {
     private final Thread workerThread;
     private final QueueEngineWorker queueEngineWorker;
 
-    public QueuedEngine(OrderBook orderBook) {
+    public QueuedEngine(OrderBook orderBook, Journal journal) {
         this.queue = new ArrayBlockingQueue<>(1000);
-        this.queueEngineWorker = new QueueEngineWorker(queue, orderBook);
+        this.queueEngineWorker = new QueueEngineWorker(queue, orderBook, journal);
         this.workerThread = new Thread(this.queueEngineWorker, "matching-engine-worker");
         workerThread.start();
     }
